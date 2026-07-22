@@ -1,5 +1,7 @@
 # WeatherWise AI — Storm Operations Console
 
+**Live demo:** [weatherwise-ai-console.vercel.app](https://weatherwise-ai-console.vercel.app)
+
 A mobile-first weather intelligence dashboard built as a senior frontend engineering portfolio piece. It's designed to look and behave like a product a company such as **The Weather Channel** would ship: alert-first design, map-driven interaction, offline resilience, and a documented Core Web Vitals optimization story — not a generic admin-dashboard template.
 
 > Live weather, radar sweeps, and severe alerts are all served from a typed **mock provider** with realistic data shapes, so the app runs instantly with zero API keys and no billing risk, while staying one adapter away from a real weather API.
@@ -187,24 +189,33 @@ Reliability is structural, not aspirational:
 
 ## Screenshots
 
-> _Add screenshots here before sharing the portfolio link — mobile dashboard, location detail, alerts, map, and performance page are the most representative views._
+| Dashboard (mobile) | Dashboard (desktop) |
+| --- | --- |
+| ![Dashboard mobile](docs/screenshots/dashboard-mobile.png) | ![Dashboard desktop](docs/screenshots/dashboard-desktop.png) |
 
-| Dashboard (mobile) | Alerts | Performance |
+| Alerts | Location detail | Performance |
 | --- | --- | --- |
-| `docs/screenshots/dashboard.png` | `docs/screenshots/alerts.png` | `docs/screenshots/performance.png` |
+| ![Alerts](docs/screenshots/alerts-mobile.png) | ![Location detail](docs/screenshots/location-detail-mobile.png) | ![Performance](docs/screenshots/performance-mobile.png) |
 
 ## Lighthouse report
 
-Target scores are documented on [`/performance`](app/performance/page.tsx). To generate a real report:
+Measured against the live production deployment on 2026-07-22 — see [`docs/lighthouse/`](docs/lighthouse/) for the full HTML reports.
+
+| Category | Desktop | Mobile (throttled) |
+| --- | --- | --- |
+| Performance | 100 | 97 |
+| Accessibility | 100 | 100 |
+| Best Practices | 100 | 100 |
+| SEO | 100 | 100 |
+
+To regenerate:
 
 ```bash
 npm run build && npm run start
 npx lighthouse http://localhost:3000 \
-  --output=html --output-path=./docs/lighthouse/report.html \
+  --output=html --output-path=./docs/lighthouse/desktop-report.html \
   --preset=desktop
 ```
-
-Commit the exported report into `docs/lighthouse/` so reviewers can open it directly.
 
 ## Local setup
 
@@ -238,10 +249,14 @@ No secrets are committed. `.env*` is git-ignored except `.env.example`.
 
 ## Deployment to Vercel
 
+Live at [weatherwise-ai-console.vercel.app](https://weatherwise-ai-console.vercel.app).
+
 1. Push this repo to GitHub.
 2. Import it in [Vercel](https://vercel.com/new).
 3. No environment variables are required for the default mock-data build.
 4. Deploy — the app is fully static/edge-friendly aside from the two API route handlers, which run on the `edge` runtime.
+
+> If your Vercel team has **SSO/deployment protection** enabled by default for new projects, the production URL will redirect to a Vercel login until you disable it: `vercel project protection disable <project> --sso`.
 
 ## Roadmap
 

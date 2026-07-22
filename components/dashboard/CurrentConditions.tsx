@@ -2,6 +2,7 @@ import { Droplets, Eye, Gauge, Sunrise, Sunset, Wind } from "lucide-react";
 import type { WeatherSnapshot } from "@/lib/weather/types";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { formatLocationLabel } from "@/lib/utils";
 import { WeatherIcon } from "./WeatherIcon";
 
 interface CurrentConditionsProps {
@@ -28,7 +29,7 @@ export function CurrentConditions({ snapshot, isStale }: CurrentConditionsProps)
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs font-medium tracking-widest text-(--color-text-secondary) uppercase">
-              {location.name}, {location.region}
+              {formatLocationLabel(location.name, location.region, location.country)}
             </p>
             <p className="mt-0.5 text-[11px] text-(--color-text-muted)">
               Updated{" "}

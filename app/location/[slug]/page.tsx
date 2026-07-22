@@ -15,6 +15,7 @@ import { AlertCard } from "@/components/alerts/AlertCard";
 import { SaveToggleButton } from "@/components/locations/SaveToggleButton";
 import { CachedDataNotice } from "@/components/locations/CachedDataNotice";
 import { WeatherMap } from "@/components/maps/WeatherMap";
+import { formatLocationLabel } from "@/lib/utils";
 import { ShieldCheck } from "lucide-react";
 
 interface LocationPageProps {
@@ -29,9 +30,10 @@ export async function generateMetadata({ params }: LocationPageProps): Promise<M
   const { slug } = await params;
   const location = await weatherService.getLocation(slug);
   if (!location) return { title: "Location not found" };
+  const label = formatLocationLabel(location.name, location.region, location.country);
   return {
-    title: `${location.name}, ${location.region}`,
-    description: `Current conditions, hourly and 7-day forecast, and active alerts for ${location.name}, ${location.region}.`,
+    title: label,
+    description: `Current conditions, hourly and 7-day forecast, and active alerts for ${label}.`,
   };
 }
 

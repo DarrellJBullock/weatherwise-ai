@@ -23,3 +23,10 @@ export function formatDateTime(iso: string, timeZone?: string): string {
     timeZone,
   });
 }
+
+/** "Name, Region" when a region exists (US-style), otherwise falls back to country or just the name. */
+export function formatLocationLabel(name: string, region?: string, country?: string): string {
+  if (region) return `${name}, ${region}`;
+  if (country) return `${name}, ${country}`;
+  return name;
+}

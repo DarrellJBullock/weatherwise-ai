@@ -63,7 +63,7 @@ Hero current-conditions card, saved-location chips, hourly carousel, 7-day forec
 Full current conditions, hourly/daily forecast, location-scoped alerts with expandable detail, activity recommendations, single-location map, offline/cached-data notice.
 
 **Saved Locations** (`/locations`)
-Add/remove/set-default saved cities, per-location alert badges, mini forecast cards, city search — all persisted to `localStorage`.
+Add/remove/set-default saved cities, per-location alert badges, mini forecast cards, and **free-text search for any city worldwide** (not just the curated roster) via a keyless geocoding API — all persisted to `localStorage`.
 
 **Alerts** (`/alerts`)
 All active alerts across tracked cities, severity filter tabs, plain-English impact + recommended action, mock NWS-style source metadata, expandable `<details>`-based cards (zero JS required to expand).
@@ -101,6 +101,7 @@ app/
   offline/                 Offline fallback (Server page → Client content island)
   api/weather/route.ts     Edge route handler, cache headers
   api/alerts/route.ts      Edge route handler, cache headers
+  api/geocode/route.ts     Edge route handler, proxies Open-Meteo's free geocoding API
   icon.tsx / apple-icon.tsx/ icons/*  Generated PWA icons (next/og ImageResponse, no binary assets)
 
 components/
@@ -112,7 +113,7 @@ components/
   performance/ VitalsCard, PerformanceChecklist, LighthouseSummary
 
 lib/
-  weather/     types.ts, mockWeatherProvider.ts, weatherService.ts, cache.ts
+  weather/     types.ts, mockWeatherProvider.ts, weatherService.ts, cache.ts, locationSlug.ts
   performance/ vitals.ts — Core Web Vitals + Lighthouse target data
   storage/     useSyncExternalStore-backed stores for saved locations + cached entries
   utils.ts     cn() className merge, date/time formatting
@@ -133,6 +134,17 @@ hooks/
 4. Client hooks cache successful responses into `localStorage` (`lib/weather/cache.ts`) so a location viewed once is available offline.
 
 To go live: implement `WeatherProvider` against a real API (e.g. NWS or Open-Meteo) and swap the `activeProvider` in `weatherService.ts`. Nothing else changes.
+
+### Adding any city, without a database
+
+The curated 7-city roster has hand-authored data, but `/locations` search isn't limited to it — you can add **any city worldwide**:
+
+1. `app/api/geocode/route.ts` proxies [Open-Meteo's geocoding API](https://open-meteo.com/en/docs/geocoding-api), which is free and requires no API key, to resolve a search query to name/coordinates/timezone.
+2. `lib/weather/locationSlug.ts` encodes that location into a **self-describing slug** — a URL-safe base64 blob of `{name, region, country, lat, lon, timezone}` prefixed with `geo-`. There's no database: the slug *is* the record.
+3. `mockWeatherProvider.ts` decodes the slug on demand and synthesizes a plausible forecast from it — temperature from latitude + time of year, condition from a temperature-appropriate pool, and an occasional generic alert — all seeded so it's stable per city per hour, exactly like the curated cities.
+4. Everywhere else in the app (saved locations, the map, `/location/[slug]`, offline caching) only ever deals with a `slug` string, so none of it needed to change to support arbitrary cities.
+
+The tradeoff: synthetic-city URLs are long and unpretty, and their forecasts are modeled, not measured — both called out in the UI copy on the search page.
 
 ## Performance strategy
 

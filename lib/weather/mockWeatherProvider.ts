@@ -8,6 +8,8 @@ import type {
   WeatherAlert,
   WeatherSnapshot,
 } from "./types";
+import { decodeCustomLocationSlug } from "./locationSlug";
+import { formatLocationLabel } from "../utils";
 
 /** Deterministic string hash -> seeded PRNG so mock data is stable across requests/builds. */
 function mulberry32(seed: number) {
@@ -46,6 +48,14 @@ const CONDITION_LABELS: Record<ConditionCode, string> = {
   windy: "Windy",
 };
 
+interface AlertTemplate {
+  severity: WeatherAlert["severity"];
+  headline: string;
+  impactSummary: string;
+  recommendedAction: string;
+  hoursFromNow: [number, number];
+}
+
 interface CityProfile {
   slug: string;
   name: string;
@@ -58,13 +68,7 @@ interface CityProfile {
   humidityPct: number;
   windMph: number;
   aqi: number;
-  hasAlert?: {
-    severity: WeatherAlert["severity"];
-    headline: string;
-    impactSummary: string;
-    recommendedAction: string;
-    hoursFromNow: [number, number];
-  };
+  hasAlert?: AlertTemplate;
 }
 
 const CITY_PROFILES: CityProfile[] = [
@@ -188,6 +192,104 @@ const CITY_PROFILES: CityProfile[] = [
   },
 ];
 
+/**
+ * Any city can be added via free-text search (see app/api/geocode), but the
+ * app only ever talks to a keyless geocoding API — no real weather data
+ * source is wired in. So locations outside the curated CITY_PROFILES get a
+ * procedurally synthesized profile instead: a plausible seasonal
+ * temperature from latitude + time of year, a condition drawn from a
+ * temperature-appropriate pool, and an occasional generic alert. It's
+ * fabricated, but it's fabricated *consistently* per city per hour (same
+ * seeded rand as the curated cities), and it keeps the "mock provider,
+ * swap in a real API later" architecture honest for arbitrary locations.
+ */
+const SYNTHETIC_CONDITIONS_COLD: ConditionCode[] = ["cloudy", "snow", "sleet", "fog", "windy"];
+const SYNTHETIC_CONDITIONS_MILD: ConditionCode[] = ["partly-cloudy-day", "cloudy", "drizzle", "rain", "windy"];
+const SYNTHETIC_CONDITIONS_WARM: ConditionCode[] = ["clear-day", "partly-cloudy-day", "cloudy", "windy"];
+const SYNTHETIC_CONDITIONS_HOT: ConditionCode[] = ["clear-day", "partly-cloudy-day", "thunderstorm"];
+
+const GENERIC_ALERT_TEMPLATES: Record<"hot" | "storm" | "cold" | "wind", AlertTemplate> = {
+  hot: {
+    severity: "advisory",
+    headline: "Heat Advisory",
+    impactSummary:
+      "Afternoon heat index values may approach dangerous levels, especially for outdoor workers and those without air conditioning.",
+    recommendedAction:
+      "Stay hydrated, limit strenuous outdoor activity to early morning or evening, and check on vulnerable neighbors.",
+    hoursFromNow: [1, 12],
+  },
+  storm: {
+    severity: "watch",
+    headline: "Severe Thunderstorm Watch",
+    impactSummary:
+      "Atmospheric conditions are favorable for thunderstorms capable of producing damaging wind gusts and heavy rain.",
+    recommendedAction: "Keep an eye on the sky and be ready to move indoors if storms develop nearby.",
+    hoursFromNow: [2, 14],
+  },
+  cold: {
+    severity: "watch",
+    headline: "Winter Weather Watch",
+    impactSummary: "Accumulating snow or ice is possible, which could make travel difficult.",
+    recommendedAction: "Prepare for slippery roads and consider delaying non-essential travel.",
+    hoursFromNow: [4, 20],
+  },
+  wind: {
+    severity: "advisory",
+    headline: "Wind Advisory",
+    impactSummary:
+      "Sustained winds and gusts may make driving difficult, especially for high-profile vehicles, and could down tree limbs.",
+    recommendedAction: "Secure loose outdoor objects and use caution on bridges and open roadways.",
+    hoursFromNow: [1, 18],
+  },
+};
+
+function pick<T>(items: T[], rand: () => number): T {
+  return items[Math.floor(rand() * items.length)];
+}
+
+function buildSyntheticProfile(location: LocationInfo, rand: () => number): CityProfile {
+  const { lat } = location.coordinates;
+  const month = new Date().getUTCMonth();
+  const seasonPeakMonth = lat >= 0 ? 6 : 0; // Northern hemisphere peaks in July, Southern in January
+  const monthsFromPeak = Math.min(Math.abs(month - seasonPeakMonth), 12 - Math.abs(month - seasonPeakMonth));
+  const seasonalSwingF = (1 - monthsFromPeak / 6) * 22;
+  const latitudeBaselineF = 82 - Math.abs(lat) * 0.75;
+  const baseTempF = Math.round(Math.min(112, Math.max(-10, latitudeBaselineF + seasonalSwingF + (rand() * 10 - 5))));
+
+  const conditionPool =
+    baseTempF <= 28
+      ? SYNTHETIC_CONDITIONS_COLD
+      : baseTempF <= 55
+        ? SYNTHETIC_CONDITIONS_MILD
+        : baseTempF <= 88
+          ? SYNTHETIC_CONDITIONS_WARM
+          : SYNTHETIC_CONDITIONS_HOT;
+  const condition = pick(conditionPool, rand);
+
+  let hasAlert: AlertTemplate | undefined;
+  if (rand() < 0.22) {
+    if (baseTempF >= 92) hasAlert = GENERIC_ALERT_TEMPLATES.hot;
+    else if (condition === "thunderstorm") hasAlert = GENERIC_ALERT_TEMPLATES.storm;
+    else if (baseTempF <= 30) hasAlert = GENERIC_ALERT_TEMPLATES.cold;
+    else hasAlert = GENERIC_ALERT_TEMPLATES.wind;
+  }
+
+  return {
+    slug: location.slug,
+    name: location.name,
+    region: location.region,
+    country: location.country,
+    coordinates: location.coordinates,
+    timezone: location.timezone,
+    baseTempF,
+    condition,
+    humidityPct: Math.round(35 + rand() * 50),
+    windMph: Math.round(4 + rand() * 18),
+    aqi: Math.round(12 + rand() * 65),
+    hasAlert,
+  };
+}
+
 function aqiCategory(aqi: number): AirQuality["category"] {
   if (aqi <= 50) return "Good";
   if (aqi <= 100) return "Moderate";
@@ -254,6 +356,10 @@ function buildAlert(profile: CityProfile): WeatherAlert[] {
   if (!profile.hasAlert) return [];
   const now = Date.now();
   const [startH, endH] = profile.hasAlert.hoursFromNow;
+  const readableId = profile.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
   return [
     {
       id: `${profile.slug}-alert-1`,
@@ -262,11 +368,11 @@ function buildAlert(profile: CityProfile): WeatherAlert[] {
       headline: profile.hasAlert.headline,
       impactSummary: profile.hasAlert.impactSummary,
       recommendedAction: profile.hasAlert.recommendedAction,
-      affectedArea: `${profile.name}, ${profile.region}`,
+      affectedArea: formatLocationLabel(profile.name, profile.region, profile.country),
       startsAt: new Date(now + startH * 60 * 60 * 1000).toISOString(),
       endsAt: new Date(now + endH * 60 * 60 * 1000).toISOString(),
       source: "National Weather Service (mock)",
-      sourceId: `NWS-MOCK-${profile.slug.toUpperCase()}-001`,
+      sourceId: `NWS-MOCK-${readableId.toUpperCase()}-001`,
     },
   ];
 }
@@ -287,15 +393,23 @@ export function getAllLocations(): LocationInfo[] {
 }
 
 export function getLocationBySlug(slug: string): LocationInfo | undefined {
-  const profile = CITY_PROFILES.find((c) => c.slug === slug);
-  return profile ? toLocationInfo(profile) : undefined;
+  const curated = CITY_PROFILES.find((c) => c.slug === slug);
+  if (curated) return toLocationInfo(curated);
+  return decodeCustomLocationSlug(slug);
 }
 
 export function getMockSnapshot(slug: string): WeatherSnapshot | undefined {
-  const profile = CITY_PROFILES.find((c) => c.slug === slug);
-  if (!profile) return undefined;
+  const curated = CITY_PROFILES.find((c) => c.slug === slug);
+  const rand = mulberry32(hashSeed(slug + new Date().toISOString().slice(0, 13)));
 
-  const rand = mulberry32(hashSeed(profile.slug + new Date().toISOString().slice(0, 13)));
+  let profile: CityProfile;
+  if (curated) {
+    profile = curated;
+  } else {
+    const location = decodeCustomLocationSlug(slug);
+    if (!location) return undefined;
+    profile = buildSyntheticProfile(location, rand);
+  }
   const now = new Date();
   const sunriseHour = 6 + Math.floor(rand() * 2);
   const sunsetHour = 19 + Math.floor(rand() * 2);

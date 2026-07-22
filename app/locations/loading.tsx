@@ -1,0 +1,12 @@
+import { Skeleton } from "@/components/ui/Skeleton";
+
+export default function Loading() {
+  return (
+    <div className="flex flex-col gap-3 py-2" aria-busy="true" aria-label="Loading locations">
+      <Skeleton className="h-5 w-32" />
+      <Skeleton className="h-16 w-full rounded-2xl" />
+      <Skeleton className="h-16 w-full rounded-2xl" />
+      <Skeleton className="h-10 w-full rounded-full" />
+    </div>
+  );
+}

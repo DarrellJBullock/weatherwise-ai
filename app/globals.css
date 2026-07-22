@@ -1,8 +1,32 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #05070c;
+  --foreground: #eef4fb;
+
+  --color-console-bg: #05070c;
+  --color-console-bg-elevated: #0a0f1a;
+  --color-panel: rgba(15, 23, 38, 0.62);
+  --color-panel-strong: rgba(15, 23, 38, 0.82);
+  --color-panel-border: rgba(120, 170, 220, 0.16);
+  --color-panel-border-strong: rgba(120, 170, 220, 0.32);
+
+  --color-accent-cyan: #35d6e0;
+  --color-accent-cyan-dim: #1a8f99;
+  --color-accent-amber: #f2b544;
+  --color-accent-orange: #f2793f;
+  --color-accent-red: #ef4a5e;
+  --color-accent-emerald: #3ddc9b;
+  --color-accent-blue: #4d8ff0;
+
+  --color-text-primary: #eef4fb;
+  --color-text-secondary: #9fb2c9;
+  --color-text-muted: #6b7c92;
+
+  --color-severity-advisory: #4d8ff0;
+  --color-severity-watch: #f2b544;
+  --color-severity-warning: #f2793f;
+  --color-severity-emergency: #ef4a5e;
 }
 
 @theme inline {
@@ -10,17 +34,168 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --color-console-bg: var(--color-console-bg);
+  --color-console-bg-elevated: var(--color-console-bg-elevated);
+  --color-panel: var(--color-panel);
+  --color-panel-strong: var(--color-panel-strong);
+  --color-panel-border: var(--color-panel-border);
+  --color-panel-border-strong: var(--color-panel-border-strong);
+
+  --color-accent-cyan: var(--color-accent-cyan);
+  --color-accent-cyan-dim: var(--color-accent-cyan-dim);
+  --color-accent-amber: var(--color-accent-amber);
+  --color-accent-orange: var(--color-accent-orange);
+  --color-accent-red: var(--color-accent-red);
+  --color-accent-emerald: var(--color-accent-emerald);
+  --color-accent-blue: var(--color-accent-blue);
+
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+
+  --color-severity-advisory: var(--color-severity-advisory);
+  --color-severity-watch: var(--color-severity-watch);
+  --color-severity-warning: var(--color-severity-warning);
+  --color-severity-emergency: var(--color-severity-emergency);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  border-color: var(--color-panel-border);
+}
+
+html {
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-console-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Storm grid texture: faint radar-plot lines across the console background. */
+.storm-grid-texture {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(120, 170, 220, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 170, 220, 0.05) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 90%);
+}
+
+/* Radar sweep: rotating conic gradient behind the hero, purely decorative. */
+.radar-sweep {
+  position: absolute;
+  inset: -20% -20% auto -20%;
+  height: 140%;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 9999px;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(53, 214, 224, 0.16) 18deg,
+    transparent 40deg,
+    transparent 360deg
+  );
+  animation: radar-rotate 8s linear infinite;
+  opacity: 0.7;
+}
+
+@keyframes radar-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.radar-rings {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 50% 0%, transparent 0, transparent 18%, rgba(53, 214, 224, 0.08) 18.5%, transparent 19%),
+    radial-gradient(circle at 50% 0%, transparent 0, transparent 34%, rgba(53, 214, 224, 0.07) 34.5%, transparent 35%),
+    radial-gradient(circle at 50% 0%, transparent 0, transparent 50%, rgba(53, 214, 224, 0.05) 50.5%, transparent 51%);
+}
+
+.glass-panel {
+  background: var(--color-panel);
+  border: 1px solid var(--color-panel-border);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.glass-panel-strong {
+  background: var(--color-panel-strong);
+  border: 1px solid var(--color-panel-border-strong);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.text-glow-cyan {
+  text-shadow: 0 0 18px rgba(53, 214, 224, 0.35);
+}
+
+/* Accessible focus ring, visible on keyboard nav, high contrast against dark panels. */
+:focus-visible {
+  outline: 2px solid var(--color-accent-cyan);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-panel-border-strong);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Radar scope: circular sweep + concentric rings used by the map console. */
+.map-scope {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  overflow: hidden;
+  background:
+    repeating-radial-gradient(circle at 50% 50%, rgba(53, 214, 224, 0.08) 0, rgba(53, 214, 224, 0.08) 1px, transparent 1px, transparent 20%);
+}
+
+.map-scope-sweep {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 50%;
+  background: conic-gradient(from 0deg, rgba(53, 214, 224, 0.28), transparent 26%);
+  animation: radar-rotate 6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-scope-sweep {
+    animation: none;
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .radar-sweep {
+    animation: none;
+    opacity: 0.25;
+  }
 }

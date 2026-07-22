@@ -1,10 +1,24 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { CloudOff } from "lucide-react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { cacheSnapshot } from "@/lib/weather/cache";
+import type { WeatherSnapshot } from "@/lib/weather/types";
 
-export function CachedDataNotice() {
+/**
+ * Persists the server-rendered snapshot into the localStorage offline cache
+ * on visit, and surfaces a notice when the browser is currently offline.
+ */
+export function CachedDataNotice({ snapshot }: { snapshot: WeatherSnapshot }) {
   const isOnline = useOnlineStatus();
+  const cachedForSlug = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (cachedForSlug.current === snapshot.location.slug) return;
+    cachedForSlug.current = snapshot.location.slug;
+    cacheSnapshot(snapshot.location.slug, snapshot);
+  }, [snapshot]);
 
   if (isOnline) return null;
 

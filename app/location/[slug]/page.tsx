@@ -56,7 +56,7 @@ export default async function LocationPage({ params }: LocationPageProps) {
         <SaveToggleButton slug={snapshot.location.slug} />
       </div>
 
-      <CachedDataNotice />
+      <CachedDataNotice snapshot={snapshot} />
 
       <CurrentConditions snapshot={snapshot} />
 

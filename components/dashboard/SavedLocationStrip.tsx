@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Plus, Star } from "lucide-react";
 import { useSavedLocations } from "@/hooks/useSavedLocations";
 import type { WeatherSnapshot } from "@/lib/weather/types";
+import { cacheSnapshot } from "@/lib/weather/cache";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { WeatherIcon } from "./WeatherIcon";
@@ -31,7 +32,10 @@ export function SavedLocationStrip() {
       if (cancelled) return;
       const next: Record<string, WeatherSnapshot> = {};
       results.forEach((snap) => {
-        if (snap) next[snap.location.slug] = snap;
+        if (snap) {
+          next[snap.location.slug] = snap;
+          cacheSnapshot(snap.location.slug, snap);
+        }
       });
       setSnapshots(next);
       setIsLoading(false);

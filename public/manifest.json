@@ -1,0 +1,17 @@
+{
+  "name": "WeatherWise AI — Storm Operations Console",
+  "short_name": "WeatherWise AI",
+  "description": "A mobile-first weather intelligence dashboard with radar-driven UI, severe alert triage, saved locations, and offline-first forecasting.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#05070c",
+  "theme_color": "#05070c",
+  "categories": ["weather", "utilities"],
+  "icons": [
+    { "src": "/icons/icon-192", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512-maskable", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

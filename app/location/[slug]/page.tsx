@@ -18,6 +18,8 @@ import { WeatherMap } from "@/components/maps/WeatherMap";
 import { formatLocationLabel } from "@/lib/utils";
 import { ShieldCheck } from "lucide-react";
 
+export const revalidate = 300;
+
 interface LocationPageProps {
   params: Promise<{ slug: string }>;
 }

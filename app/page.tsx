@@ -12,6 +12,8 @@ import { Card } from "@/components/ui/Card";
 import { WeatherMap } from "@/components/maps/WeatherMap";
 import type { MapLocationSummary } from "@/components/maps/geo";
 
+export const revalidate = 300;
+
 const FEATURED_SLUG = "philadelphia";
 
 const QUICK_ACTIONS = [

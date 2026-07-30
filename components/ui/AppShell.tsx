@@ -12,7 +12,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {children}
       </main>
       <footer className="relative z-10 mx-auto hidden w-full max-w-6xl px-4 pb-6 text-xs text-(--color-text-muted) sm:block">
-        WeatherWise AI &mdash; Storm Operations Console &middot; mock data provider &middot;{" "}
+        WeatherWise AI &mdash; Storm Operations Console &middot; live data via Open-Meteo &amp; NWS &middot;{" "}
         <a
           href="https://vercel.com"
           className="underline decoration-dotted underline-offset-2 hover:text-(--color-text-secondary)"

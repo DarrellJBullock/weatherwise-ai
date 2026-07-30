@@ -6,9 +6,9 @@ export const runtime = "edge";
 
 /**
  * Free, keyless geocoding via Open-Meteo so users can search any city, not
- * just the curated mock roster. No weather comes from this API — only
- * name/coordinates/timezone, which the mock provider then uses to
- * synthesize a plausible forecast (see mockWeatherProvider.ts).
+ * just the curated roster. No weather comes from this API — only
+ * name/coordinates/timezone, which weatherService then feeds to the live
+ * Open-Meteo forecast (see openMeteoProvider.ts).
  */
 interface OpenMeteoResult {
   id: number;

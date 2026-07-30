@@ -112,8 +112,8 @@ export function LocationSearch() {
           />
         </div>
         <p className="mt-1.5 px-1 text-[11px] text-(--color-text-muted)">
-          City lookup via Open-Meteo&apos;s free geocoding API. Forecasts for cities outside the tracked roster are
-          modeled from latitude and season, not live data.
+          City lookup and forecasts powered by Open-Meteo&apos;s free API — live data for any city, not just the
+          tracked roster.
         </p>
       </div>
 

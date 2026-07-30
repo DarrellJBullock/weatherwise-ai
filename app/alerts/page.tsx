@@ -39,7 +39,7 @@ export default async function AlertsPage({ searchParams }: AlertsPageProps) {
         <h1 className="text-lg font-semibold text-(--color-text-primary)">Severe Weather Alerts</h1>
         <p className="mt-1 text-sm text-(--color-text-secondary)">
           {alerts.length} active alert{alerts.length === 1 ? "" : "s"} across tracked locations. Source: National
-          Weather Service (mock feed).
+          Weather Service.
         </p>
       </div>
 

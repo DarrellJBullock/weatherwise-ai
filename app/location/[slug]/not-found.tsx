@@ -8,7 +8,7 @@ export default function LocationNotFound() {
       <EmptyState
         icon={<MapPinOff className="size-8" aria-hidden="true" />}
         title="Location not tracked"
-        description="This city isn't in the WeatherWise AI mock provider yet. Try one of the seven tracked locations."
+        description="We couldn't resolve that location. Search for a city on the Locations page, or try one of the seven tracked locations."
         action={
           <Link
             href="/locations"

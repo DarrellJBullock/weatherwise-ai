@@ -5,7 +5,8 @@ import type { LocationInfo } from "./types";
  * self-describing slug instead of a database row: the slug itself is a
  * URL-safe, UTF-8-safe base64 encoding of the location's data. This keeps
  * the app database-free while still supporting "any city" without a paid
- * geocoding/weather API — decode the slug, synthesize mock weather from it.
+ * geocoding/weather API — decode the slug, fetch live weather for those
+ * coordinates from Open-Meteo.
  */
 const CUSTOM_SLUG_PREFIX = "geo-";
 

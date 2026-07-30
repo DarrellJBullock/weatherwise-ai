@@ -1,10 +1,7 @@
 import type { LocationInfo, WeatherAlert, WeatherSnapshot } from "./types";
-import {
-  getAllAlerts,
-  getAllLocations,
-  getLocationBySlug,
-  getMockSnapshot,
-} from "./mockWeatherProvider";
+import { getAllLocations, getLocationBySlug } from "./mockWeatherProvider";
+import { fetchOpenMeteoSnapshot } from "./openMeteoProvider";
+import { fetchNwsAlerts } from "./nwsAlertsProvider";
 
 /**
  * Provider-agnostic interface. Swap `mockWeatherProvider` for a real API
@@ -19,8 +16,8 @@ export interface WeatherProvider {
   listAlerts(): Promise<WeatherAlert[]>;
 }
 
-class MockWeatherProvider implements WeatherProvider {
-  name = "mock";
+class OpenMeteoWeatherProvider implements WeatherProvider {
+  name = "open-meteo";
 
   async listLocations(): Promise<LocationInfo[]> {
     return getAllLocations();
@@ -31,20 +28,26 @@ class MockWeatherProvider implements WeatherProvider {
   }
 
   async getSnapshot(slug: string): Promise<WeatherSnapshot | undefined> {
-    return getMockSnapshot(slug);
+    const location = await this.getLocation(slug);
+    if (!location) return undefined;
+    return fetchOpenMeteoSnapshot(location);
   }
 
   async listAlerts(): Promise<WeatherAlert[]> {
-    return getAllAlerts();
+    // Open-Meteo has no alerts feed; pull live NWS alerts (US-only, keyless)
+    // for each curated location and flatten. Custom/searched locations get
+    // their own alerts inline via getSnapshot instead.
+    const locations = await this.listLocations();
+    const perLocation = await Promise.all(locations.map((loc) => fetchNwsAlerts(loc)));
+    return perLocation.flat();
   }
 }
 
 /**
- * Active provider for the app. Because MVP rules forbid requiring a paid API
- * key, this always resolves to the mock provider today. A future
- * `LiveWeatherProvider` reading `WEATHER_API_KEY` can be swapped in here.
+ * Active provider for the app. Free, keyless Open-Meteo API — no paid key
+ * required, consistent with the geocoding API already in app/api/geocode.
  */
-const activeProvider: WeatherProvider = new MockWeatherProvider();
+const activeProvider: WeatherProvider = new OpenMeteoWeatherProvider();
 
 export const weatherService = {
   listLocations: () => activeProvider.listLocations(),
